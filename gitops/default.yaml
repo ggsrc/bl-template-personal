@@ -1,0 +1,91 @@
+argocd:
+  project:
+    - app
+
+apps:
+  - name: hello-world
+    kind: deployment
+    image: hashicorp/http-echo:0.2.3
+    repo: https://github.com/your-username/hello-world.git
+    project:
+      - name: app
+        parameters:
+          SourceRepoURL: https://github.com/your-username/gitops.git
+          SourcePath: app/hello-world
+          ContainerArgs:
+            - "-listen=:8080"
+            - "-text=Hello from hello-world"
+          ContainerPorts:
+            - containerPort: 8080
+              name: http
+            - containerPort: 4014
+              name: http-prometheus
+          LivenessProbe:
+            httpGet:
+              path: "/healthz"
+              port: 8080
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 5
+          ReadinessProbe:
+            httpGet:
+              path: "/healthz"
+              port: 8080
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 5
+          ServicePorts:
+            - name: http
+              port: 8080
+              targetPort: 8080
+            - name: http-prometheus
+              port: 4014
+              targetPort: 4014
+          HPA:
+            minReplicas: 1
+            maxReplicas: 3
+            metrics:
+              - type: Resource
+                resource:
+                  name: memory
+                  target:
+                    type: Utilization
+                    averageUtilization: 75
+              - type: Resource
+                resource:
+                  name: cpu
+                  target:
+                    type: Utilization
+                    averageUtilization: 85
+          ServiceMonitor:
+            namespace: monitoring
+            labels:
+              prometheus: enabled
+            namespaceSelector:
+              matchNames:
+                - app
+            selector:
+              matchLabels:
+                app: hello-world
+                version: 1.0.0
+            endpoints:
+              - interval: 30s
+                port: http-prometheus
+          VMServiceScrape:
+            namespace: monitoring
+            labels:
+              victoriametrics: enabled
+            namespaceSelector:
+              matchNames:
+                - app
+            endpoints:
+              - port: http-prometheus
+                interval: 30s
+          ApplicationName: hello-world
+          ApplicationNamespace: app
+          ApplicationProject: default
+          ApplicationRepo: https://github.com/your-username/hello-world.git
+          ApplicationPath: app/hello-world
+          ApplicationRevision: 1.0.0
+          ApplicationSyncPolicy: Automatic
+          ApplicationSyncOptions: Create,Delete,Prune,Rollback,Suspend,Resume,Restart

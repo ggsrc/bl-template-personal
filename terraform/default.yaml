@@ -1,0 +1,152 @@
+version: 1.0.0
+global:
+  BillingAccountID: 01ABCD-2EFGH3-4IJKL5
+  OrganizationID: "0"
+  TerraformBackendBucket: tfstore
+  TerraformVersion: 1.5.0
+
+init:
+  components:
+    backend: {}
+    projects:
+      ProjectServices:
+        ${project.app.id}:
+          - compute.googleapis.com
+          - container.googleapis.com
+          - iamcredentials.googleapis.com
+          - dns.googleapis.com
+          - certificatemanager.googleapis.com
+          - secretmanager.googleapis.com
+          - serviceusage.googleapis.com
+          - logging.googleapis.com
+          - cloudresourcemanager.googleapis.com
+          - artifactregistry.googleapis.com
+
+projects:
+  - name: app
+    global:
+      project_name: app
+      region: us-west1
+      domain: app.example.com
+    components:
+      - name: main
+        parameters: {}
+      - name: backend
+        parameters: {}
+      - name: config-gcs-tfbackend
+        parameters: {}
+      - name: provider
+        parameters: {}
+      - name: variables
+        parameters:
+          zone: us-west1-a
+      - name: vpc
+        parameters:
+          auto_create_subnetworks: false
+          enable_nat: true
+          enable_private_pool_route: false
+          enable_private_service_networking: false
+          ip_cidr_range: 10.20.0.0/16
+          nat_ip_name: app-egress-router-nat-ip
+          nat_log_enable: false
+          nat_log_filter: ERRORS_ONLY
+          nat_name: app-egress-router-nat
+          nat_router_name: app-egress-router
+          nat_source_subnetworks: ALL_SUBNETWORKS_ALL_IP_RANGES
+          private_conn_ip_name: private-conn-alloc
+          private_conn_prefix_length: 16
+          private_pool_route_name: route-private-pool-to-internet-via-nat
+          private_pool_route_priority: 900
+          private_pool_tags:
+            - gke-private-nat-pool
+          routing_mode: REGIONAL
+          subnetwork_name: us-west-1
+          subnetworks: []
+          vpc_name: app
+      - name: ip
+        parameters:
+          global_addresses:
+            - name: app
+              address_type: EXTERNAL
+          output_addresses:
+            - resource_name: app
+              output_name: gateway_ip
+      - name: firewall
+        parameters:
+          network: google_compute_network.main.name
+          rules: []
+      - name: gke
+        parameters:
+          clusterName: app-cluster
+          network: app
+          subnetwork: us-west-1
+          clusterIpv4CidrBlock: 10.28.0.0/14
+          servicesIpv4CidrBlock: 10.32.0.0/19
+          masterIpv4CidrBlock: 172.16.0.0/28
+          nodeLocations:
+            - us-west1-a
+          diskSizeGb: 20
+          machineType: e2-small
+          minNodeCount: 1
+          maxNodeCount: 3
+          initialNodeCount: 1
+          loggingConfigEnableComponents: []
+          monitoringConfigEnableComponents:
+            - SYSTEM_COMPONENTS
+          managedPrometheusEnabled: false
+          locationPolicy: BALANCED
+          releaseChannel: EXTENDED
+          deletionProtection: false
+          nodePools:
+            - name: on-demand
+              machineType: e2-standard-4
+              minNodes: 1
+              maxNodes: 3
+              nodeLocations:
+                - us-west1-a
+              labels:
+                nodepool: on-demand
+      - name: dns
+        parameters:
+          records: []
+          zones:
+            - name: app
+              dns_name: app.example.com.
+              description: App DNS zone
+              visibility: public
+      - name: cert
+        parameters:
+          certificates:
+            - name: app
+              component_name: app
+              domain: app.example.com
+              dns_zone_name: app
+              zone_project: var.project_id
+          certificate_maps:
+            - name: app
+              description: Main gateway certificate map
+          certificate_map_entries:
+            - name: app_main
+              map_name: app
+              hostname: app.example.com
+              certificates: [app]
+              description: ""
+            - name: app_subdomain
+              map_name: app
+              hostname: "*.app.example.com"
+              certificates: [app]
+              description: ""
+      - name: outputs
+        parameters:
+          certificate_maps:
+            - map_name: app
+              output_prefix: app
+          gke:
+            output_endpoint: true
+            output_cluster_name: true
+            module_name: gke
+          project_iam_bindings: []
+          service_account_keys: []
+          service_accounts: []
+          use_secret_manager_accessor: false
+          workload_identity_bindings: []
