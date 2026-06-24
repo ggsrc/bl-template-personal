@@ -1,0 +1,40 @@
+# Profile: full — adds service mesh + VictoriaMetrics + Grafana on top of minimal sealed-secret.
+# Requires cluster from terraform minimal or full. No ArgoCD; no external-secrets by default.
+
+version: 1.0.0
+
+projects:
+  - name: app
+    components:
+      - name: istio
+        parameters:
+          namespace: istio
+          istio-operator-version: 1.20.0
+          istio-version: 1.20.0
+          istio-namespace: istio
+          istio-operator-namespace: istio-operator
+          istio-operator-service-account: istio-operator
+      - name: victoria-metrics-operator
+        parameters:
+          namespace: monitoring-vm
+          release-name: victoriametrics
+          cluster: app
+          env: app
+          remote-write-url: "http://vminsert-victoriametrics-vmks.monitoring-vm.svc.cluster.local:8480/insert/0/prometheus/api/v1/write"
+          vmagent-cpu-limit: "1"
+          vmagent-memory-limit: "1Gi"
+          vmagent-cpu-request: "300m"
+          vmagent-memory-request: "512Mi"
+      - name: victoria-metrics
+        parameters:
+          namespace: monitoring-vm
+          alert-cluster: app
+      - name: grafana
+        parameters:
+          namespace: grafana
+          release-name: grafana
+          image-tag: "12.3.1"
+          root-url: "https://grafana.example.com"
+          vm-datasource-url: "http://vmselect-victoriametrics-vmks.monitoring-vm.svc.cluster.local:8481/select/0/prometheus"
+          loki-datasource-url: ""
+          hosted-domain: "example.com"

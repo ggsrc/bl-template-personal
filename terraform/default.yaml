@@ -88,7 +88,7 @@ projects:
           diskSizeGb: 20
           machineType: e2-small
           minNodeCount: 1
-          maxNodeCount: 3
+          maxNodeCount: 2
           initialNodeCount: 1
           loggingConfigEnableComponents: []
           monitoringConfigEnableComponents:
@@ -99,48 +99,16 @@ projects:
           deletionProtection: false
           nodePools:
             - name: on-demand
-              machineType: e2-standard-4
+              machineType: e2-small
               minNodes: 1
-              maxNodes: 3
+              maxNodes: 2
               nodeLocations:
                 - us-west1-a
               labels:
                 nodepool: on-demand
-      - name: dns
-        parameters:
-          records: []
-          zones:
-            - name: app
-              dns_name: app.example.com.
-              description: App DNS zone
-              visibility: public
-      - name: cert
-        parameters:
-          certificates:
-            - name: app
-              component_name: app
-              domain: app.example.com
-              dns_zone_name: app
-              zone_project: var.project_id
-          certificate_maps:
-            - name: app
-              description: Main gateway certificate map
-          certificate_map_entries:
-            - name: app_main
-              map_name: app
-              hostname: app.example.com
-              certificates: [app]
-              description: ""
-            - name: app_subdomain
-              map_name: app
-              hostname: "*.app.example.com"
-              certificates: [app]
-              description: ""
       - name: outputs
         parameters:
-          certificate_maps:
-            - map_name: app
-              output_prefix: app
+          certificate_maps: []
           gke:
             output_endpoint: true
             output_cluster_name: true

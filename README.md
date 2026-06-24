@@ -7,8 +7,10 @@ blcli template repository for one-click generation of GCP environment infrastruc
 This is a template repository for the `blcli` tool, used to quickly generate a personal-account-friendly GCP infrastructure baseline. The default model is one project + one cluster, and through templating it can quickly create:
 
 - **Terraform Configurations**: Infrastructure as code configurations for GCP resources
-- **Kubernetes Configurations**: Initialization components and optional components for Kubernetes clusters
-- **GitOps Configurations**: Basic templates for GitOps workflows
+- **Kubernetes Configurations**: Cluster platform components (Istio, monitoring, secrets, etc.)
+- **GitOps Templates** (optional): Kubernetes manifest templates for apps; default stack does **not** install ArgoCD
+
+**Personal developer defaults:** single GCP project + single GKE cluster, deploy apps with `kubectl` / `helm`. ArgoCD is intentionally omitted from the default Kubernetes stack.
 
 ## Design Architecture
 
@@ -33,12 +35,11 @@ bl-template/
 │   ├── config.yaml     # Kubernetes component configuration definitions
 │   ├── base/           # Base components (required)
 │   └── optional/        # Optional components
-├── gitops/             # GitOps configurations
-│   ├── config.yaml     # app-templates（deployment/statefulset）、argocd 组件定义
-│   ├── args.yaml       # 参数定义（含 ArgoCD Application 相关）
-│   ├── default.yaml    # 默认值：argocd.project、apps[]（name、kind、image、repo、project 等）
-│   ├── app.yaml.tmpl   # ArgoCD Application 模板
-│   └── base-*.tmpl     # deployment/statefulset/service/configmap 等基础模板
+├── gitops/             # Optional app manifest templates (disabled by default)
+│   ├── config.yaml     # deployment/statefulset base templates
+│   ├── args.yaml       # Parameter definitions for app manifests
+│   ├── default.yaml    # Empty by default; add apps[] to enable generation
+│   └── base-*.tmpl     # deployment/service/configmap 等基础模板
 └── README.md           # 本文件
 ```
 
@@ -78,29 +79,22 @@ Defines three main sections:
 
 #### kubernetes/config.yaml
 
-Defines Kubernetes cluster initialization components:
+Default Kubernetes platform stack (personal / solo developer):
 
-- **init**: Initialization components (required)
-  - `namespace`: Namespace
-  - `istio`: Service mesh
-  - `victoria-metrics`: Monitoring system
+- `external-secrets-operator` + `external-secrets`: GCP Secret Manager integration
+- `sealed-secret`: encrypted secrets in Git
+- `istio`: service mesh
+- `victoria-metrics-operator` + `victoria-metrics` + `grafana`: monitoring
 
-- **optional**: Optional components
-  - `cnpg`: CloudNativePG database operator
-  - `web-ide`: Web IDE
-  - `redis`: Redis
-  - `kiali`: Service mesh visualization
+**Not included by default:** ArgoCD (use `kubectl apply` / `helm` for apps).
 
 #### gitops/config.yaml
 
-定义 GitOps 模板与 ArgoCD 配置：
+Optional **application manifest** templates (Deployment, Service, HPA, Istio VirtualService, etc.).
 
-- **app-templates**：应用基础模板
-  - `deployment`：Deployment 类应用（path、args 指向模板与参数）
-  - `statefulset`：StatefulSet 类应用
-- **argocd**：ArgoCD 相关模板（如 app.yaml.tmpl，用于生成 ArgoCD Application）
-
-配合 `gitops/args.yaml` 与 `gitops/default.yaml` 使用。`default.yaml` 提供默认值，结构包含 `argocd.project` 与 `apps[]`（每个 app 含 name、kind、image、repo、project 等）。
+- **Default:** `gitops/default.yaml` has no apps; `blcli init` skips GitOps output.
+- **Enable:** add `apps[]` (and `argocd.project` if using blcli gitops generation) to `gitops/default.yaml` or your `args.yaml`.
+- Generated manifests can be applied directly with `kubectl`; no ArgoCD required.
 
 ### 2. args.yaml
 
@@ -181,7 +175,16 @@ For detailed design, please refer to [ARGS_DESIGN.md](./ARGS_DESIGN.md)
 
 ## blcli 用法说明
 
+**个人开发者 / AI Agent：** 请先阅读 [PERSONAL_DEV.md](./PERSONAL_DEV.md) 与 [profiles/README.md](./profiles/README.md)。
+
 本仓库作为 blcli 的模板仓库，通过 `-r` 指定本地路径或 GitHub 地址使用。
+
+### Profile（推荐）
+
+| Profile | 命令 | 说明 |
+|---------|------|------|
+| `minimal` | `blcli init-args -r . --org my-dev`（默认） | 无 dns/cert；K8s 仅 sealed-secret |
+| `full` | `blcli init-args -r . --profile full --org my-dev` | 增加 dns+cert 与 istio/监控栈；**需真实域名** |
 
 ### 1. 生成参数文件（init-args）
 
@@ -193,36 +196,38 @@ blcli init-args -r github.com/NFTGalaxy/bl-template -o args.yaml
 blcli init-args -r /path/to/bl-template -o args.yaml
 ```
 
-生成的 `args.yaml` 包含 `global`、`terraform`、`kubernetes`、`gitops` 等段（取决于模板中的 config/args 定义）。
+生成的 `args.yaml` 包含 `global`、`terraform`、`kubernetes` 等段；默认**不含** GitOps apps（除非在 `gitops/default.yaml` 中自行添加）。
 
 ### 2. 生成基础设施配置（init）
 
-根据 `args.yaml` 和模板生成 Terraform、Kubernetes、GitOps 配置：
+根据 `args.yaml` 和模板生成 Terraform、Kubernetes 配置（GitOps 仅在 args 含 `gitops.apps` 时生成）：
 
 ```bash
-# 生成全部（terraform + kubernetes + gitops，若 args 中有对应段）
-blcli init -r github.com/NFTGalaxy/bl-template -a args.yaml
+# 生成 terraform + kubernetes（默认）
+blcli init -r /path/to/bl-template-one -a args.yaml
 
 # 只生成 terraform
-blcli init terraform -r github.com/NFTGalaxy/bl-template -a args.yaml
+blcli init terraform -r /path/to/bl-template-one -a args.yaml
 
 # 只生成 kubernetes
-blcli init kubernetes -r github.com/NFTGalaxy/bl-template -a args.yaml
+blcli init kubernetes -r /path/to/bl-template-one -a args.yaml
 
 # 生成时指定输出目录与覆盖
-blcli init -r /path/to/bl-template -a args.yaml --output ./workspace/output -w
+blcli init -r /path/to/bl-template-one -a args.yaml --output ./workspace/output -w
 ```
 
 - **Terraform**：输出到 `{workspace}/terraform/`（init、gcp 项目、modules 等）。
 - **Kubernetes**：按 `kubernetes.projects[]` 与 `components` 输出到 `{workspace}/kubernetes/{project}/{component}/`。
-- **GitOps**：当 `args.yaml` 含 `gitops.argocd` 与 `gitops.apps` 时，按 project × app 输出到 `{workspace}/gitops/{project}/{app_name}/`，包含 deployment/statefulset、service、configmap、`app.yaml`（ArgoCD Application）等。
+- **GitOps**（可选）：在 `args.yaml` 配置 `gitops.apps[]` 后，输出 deployment/service 等 manifest 到 `{workspace}/gitops/{project}/{app}/`；用 `kubectl apply` 部署，无需 ArgoCD。
 
-### 3. 应用 GitOps（apply gitops）
-
-对生成的 GitOps 目录中的 ArgoCD Application 执行 `kubectl apply`，实际应用由 ArgoCD 同步部署：
+### 3. 部署应用（个人开发者推荐）
 
 ```bash
-blcli apply gitops -d ./workspace/output/gitops --args args.yaml
+# 平台组件
+blcli apply kubernetes -d ./workspace/output/kubernetes
+
+# 业务应用：直接 kubectl / helm，或 apply 生成的 gitops manifest
+kubectl apply -f ./workspace/output/gitops/app/my-app/
 ```
 
 ### 4. 初始化仓库并推送到 GitHub（apply init-repos）

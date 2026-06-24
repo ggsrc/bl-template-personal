@@ -1,0 +1,44 @@
+# Profile: full — adds public DNS + TLS (requires a real domain you control).
+# Use: blcli init-args -r <bl-template-one> --profile full -o args.yaml
+# See profiles/README.md and PERSONAL_DEV.md before apply terraform.
+
+version: 1.0.0
+
+projects:
+  - name: app
+    components:
+      - name: dns
+        parameters:
+          records: []
+          zones:
+            - name: app
+              dns_name: app.example.com.
+              description: App DNS zone
+              visibility: public
+      - name: cert
+        parameters:
+          certificates:
+            - name: app
+              component_name: app
+              domain: app.example.com
+              dns_zone_name: app
+              zone_project: var.project_id
+          certificate_maps:
+            - name: app
+              description: Main gateway certificate map
+          certificate_map_entries:
+            - name: app_main
+              map_name: app
+              hostname: app.example.com
+              certificates: [app]
+              description: ""
+            - name: app_subdomain
+              map_name: app
+              hostname: "*.app.example.com"
+              certificates: [app]
+              description: ""
+      - name: outputs
+        parameters:
+          certificate_maps:
+            - map_name: app
+              output_prefix: app
