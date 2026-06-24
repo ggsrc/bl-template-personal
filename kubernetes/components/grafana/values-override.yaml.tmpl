@@ -1,5 +1,5 @@
-# corp/环境覆盖：由 blcli 渲染，参考 example/alva/k8s/alva-ai-corp/1-2-grafana/values-corp.yaml
-# 与 values.yaml 一起使用：helm upgrade -i -f values.yaml -f values-corp.yaml
+# Environment-specific Helm values override (rendered from values-override.yaml.tmpl).
+# Used with: helm upgrade -i -f values.yaml -f values-override.yaml
 grafana:
   image:
     registry: docker.io
@@ -105,16 +105,18 @@ grafana:
           timeInterval: 15s
           queryTimeout: 90s
           disableMetricsLookup: false
+{{- if and .lokiDatasourceUrl (ne .lokiDatasourceUrl "") }}
       - name: loki-logs
         type: loki
         access: proxy
-        url: {{ default `http://loki-gateway.loki.svc.cluster.local` .lokiDatasourceUrl }}
+        url: {{ .lokiDatasourceUrl }}
         jsonData:
           timeout: 30
           maxLines: 1000
           httpHeaderName1: X-Scope-OrgID
         secureJsonData:
           httpHeaderValue1: fake
+{{- end }}
 
   envFromSecrets:
   - name: grafana-google-auth

@@ -18,10 +18,10 @@ parameters:
         default: "grafana"
       valuesFiles:
         type: string
-        description: "Space-separated values files. Use values.yaml values-corp.yaml after rendering values-corp.yaml.tmpl"
+        description: "Space-separated values files. Use values.yaml values-override.yaml after rendering values-override.yaml.tmpl"
         required: false
-        default: "values.yaml values-corp.yaml"
-      # values-corp.yaml.tmpl 渲染参数
+        default: "values.yaml values-override.yaml"
+      # values-override.yaml.tmpl 渲染参数
       imageTag:
         type: string
         description: "Grafana image tag"
@@ -44,9 +44,9 @@ parameters:
         default: "http://vmselect-victoriametrics-vmks.monitoring-vm.svc.cluster.local:8481/select/0/prometheus"
       lokiDatasourceUrl:
         type: string
-        description: "Loki datasource URL"
+        description: "Optional Loki datasource URL; leave empty to omit Loki (no Loki stack in template-one default)"
         required: false
-        default: "http://loki-gateway.loki.svc.cluster.local"
+        default: ""
       rootUrl:
         type: string
         description: "Grafana server root_url (e.g. https://example.com/grafana)"

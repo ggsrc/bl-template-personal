@@ -32,11 +32,6 @@ app-templates:
     - name: vmServiceScrape
       path: gitops/base-vmscrape.yaml.tmpl
       description: "Base VMServiceScrape template for VictoriaMetrics monitoring"
-  
-    - name: app
-      path: gitops/app.yaml.tmpl
-      args: gitops/args.yaml
-      description: "Application definition template for GitOps tools (ArgoCD/FluxCD)"
 
   statefulset:
     - name: statefulset
@@ -68,12 +63,4 @@ app-templates:
     - name: vmServiceScrape
       path: gitops/base-vmscrape.yaml.tmpl
       description: "Base VMServiceScrape template for VictoriaMetrics monitoring"
-    
-    - name: app
-      path: gitops/app.yaml.tmpl
-      args: gitops/args.yaml
-      description: "Application definition template for GitOps tools (ArgoCD/FluxCD)"
 
-argocd:
-  path: gitops/app.yaml.tmpl
-  args: gitops/args.yaml

@@ -51,7 +51,7 @@ fi
 
 NAMESPACE="{{ default "grafana" .namespace }}"
 RELEASE_NAME="{{ default "grafana" .releaseName }}"
-VALUES_FILES="{{ if .valuesFiles }}{{ .valuesFiles }}{{ else }}values.yaml values-corp.yaml{{ end }}"
+VALUES_FILES="{{ if .valuesFiles }}{{ .valuesFiles }}{{ else }}values.yaml values-override.yaml{{ end }}"
 
 if [ ! -f "Chart.yaml" ]; then
   echo "Error: Chart.yaml not found. Run this script from the component directory."
