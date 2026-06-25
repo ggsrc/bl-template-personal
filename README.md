@@ -1,6 +1,76 @@
-# bl-template
+<div align="center">
 
-blcli template repository for one-click generation of GCP environment infrastructure configurations.
+# bl-template-personal
+
+**Personal GCP platform template for [blcli](https://github.com/ggsrc/blcli)** — one project, one cluster, minimal config, optional full observability stack.
+
+*Default: deploy apps with `kubectl` / `helm` — ArgoCD is not required.*
+
+[![GitHub stars](https://img.shields.io/github/stars/ggsrc/bl-template-personal?style=flat-square)](https://github.com/ggsrc/bl-template-personal/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/ggsrc/bl-template-personal?style=flat-square)](https://github.com/ggsrc/bl-template-personal/network/members)
+[![blcli](https://img.shields.io/badge/powered%20by-blcli-blue?style=flat-square)](https://github.com/ggsrc/blcli)
+[![Enterprise template](https://img.shields.io/badge/enterprise-bl--template-orange?style=flat-square)](https://github.com/ggsrc/bl-template)
+
+[Quick Start](#blcli-usage) · [中文说明](README_zh.md) · [PERSONAL_DEV.md](PERSONAL_DEV.md) · [Profiles](profiles/README.md)
+
+</div>
+
+<!-- ADOPTION:START -->
+**Adoption snapshot:** tracked via GitHub stars and forks · [Star this repo](https://github.com/ggsrc/bl-template-personal) when you use it with blcli
+<!-- ADOPTION:END -->
+
+---
+
+## What is bl-template-personal?
+
+Lightweight **personal / solo-developer** template for [blcli](https://github.com/ggsrc/blcli). Generates a single GCP project + GKE cluster baseline with optional DNS, certs, Istio, and monitoring — without the multi-env Org complexity of [bl-template](https://github.com/ggsrc/bl-template).
+
+```
+bl-template-personal  +  args.yaml  +  blcli  →  one cluster  →  kubectl / helm for apps
+```
+
+Ideal for labs, AI-assisted infra iteration, and low-billing GCP experiments.
+
+---
+
+## Who is it for?
+
+| Audience | Profile | Typical use |
+|----------|---------|-------------|
+| Solo developers | `minimal` (default) | Generate & check locally; smallest GCP bill |
+| Developers with a real domain | `full` | DNS + managed certs + Istio + Victoria Metrics + Grafana |
+| Enterprise multi-env teams | — | Use [bl-template](https://github.com/ggsrc/bl-template) instead |
+
+See [PERSONAL_DEV.md](./PERSONAL_DEV.md) for AI agent workflows and required parameter changes.
+
+---
+
+## Why this template?
+
+- **Low config burden** — `minimal` profile: core Terraform + sealed-secrets only; add complexity when you need it.
+- **Progressive profiles** — `minimal` → `full` without changing blcli or the template protocol.
+- **No ArgoCD by default** — platform via `blcli apply kubernetes`; apps via `kubectl` / `helm` (GitOps manifests optional).
+- **AI-friendly** — self-describing `args.yaml`, `blcli explain`, and documented pitfalls in [PERSONAL_DEV.md](./PERSONAL_DEV.md).
+
+| bl-template (enterprise) | bl-template-personal |
+|---|---|
+| Multi-project corp / stg / prd | Single project + cluster |
+| ArgoCD GitOps included | ArgoCD omitted by default |
+| Org-level GCP setup | Personal account (`OrganizationID: "0"`) |
+
+---
+
+## Who uses bl-template-personal?
+
+We are collecting adopters. If you use this template in your lab or product, [open a PR](https://github.com/ggsrc/bl-template-personal/edit/main/README.md) to add your name or org below. The list is mirrored to [README_zh.md](README_zh.md) automatically.
+
+<!-- ADOPTERS:START -->
+<!-- Example:
+- [Your Name](https://example.com) — solo GCP lab on blcli
+-->
+<!-- ADOPTERS:END -->
+
+---
 
 ## Repository Purpose
 
@@ -173,72 +243,57 @@ See [ARGS_DESIGN.md](./ARGS_DESIGN.md) for full parameter and validation documen
 
 For detailed design, please refer to [ARGS_DESIGN.md](./ARGS_DESIGN.md)
 
-## blcli 用法说明
+## blcli Usage
 
-**个人开发者 / AI Agent：** 请先阅读 [PERSONAL_DEV.md](./PERSONAL_DEV.md) 与 [profiles/README.md](./profiles/README.md)。
+**Personal developers / AI agents:** see [PERSONAL_DEV.md](./PERSONAL_DEV.md) and [profiles/README.md](./profiles/README.md).
 
-本仓库作为 blcli 的模板仓库，通过 `-r` 指定本地路径或 GitHub 地址使用。
+Use this repo as a blcli template via `-r` (local path or GitHub URL).
 
-### Profile（推荐）
+### Profiles (recommended)
 
-| Profile | 命令 | 说明 |
-|---------|------|------|
-| `minimal` | `blcli init-args -r . --org my-dev`（默认） | 无 dns/cert；K8s 仅 sealed-secret |
-| `full` | `blcli init-args -r . --profile full --org my-dev` | 增加 dns+cert 与 istio/监控栈；**需真实域名** |
+| Profile | Command | Description |
+|---------|---------|-------------|
+| `minimal` | `blcli init-args -r github.com/ggsrc/bl-template-personal --org my-dev` (default) | No dns/cert; K8s sealed-secret only |
+| `full` | `blcli init-args -r github.com/ggsrc/bl-template-personal --profile full --org my-dev` | Adds dns+cert and Istio/monitoring; **requires a real domain** |
 
-### 1. 生成参数文件（init-args）
-
-从模板仓库收集各层 `args.yaml` 定义，生成一份可编辑的 `args.yaml`：
+### 1. Generate parameter file (`init-args`)
 
 ```bash
-blcli init-args -r github.com/NFTGalaxy/bl-template -o args.yaml
-# 或使用本地路径
-blcli init-args -r /path/to/bl-template -o args.yaml
+blcli init-args -r github.com/ggsrc/bl-template-personal -o args.yaml
+blcli init-args -r /path/to/bl-template-personal -o args.yaml
 ```
 
-生成的 `args.yaml` 包含 `global`、`terraform`、`kubernetes` 等段；默认**不含** GitOps apps（除非在 `gitops/default.yaml` 中自行添加）。
+Generated `args.yaml` includes `global`, `terraform`, `kubernetes`, etc. GitOps apps are omitted unless added in `gitops/default.yaml`.
 
-### 2. 生成基础设施配置（init）
-
-根据 `args.yaml` 和模板生成 Terraform、Kubernetes 配置（GitOps 仅在 args 含 `gitops.apps` 时生成）：
+### 2. Generate infrastructure configuration (`init`)
 
 ```bash
-# 生成 terraform + kubernetes（默认）
-blcli init -r /path/to/bl-template-one -a args.yaml
-
-# 只生成 terraform
-blcli init terraform -r /path/to/bl-template-one -a args.yaml
-
-# 只生成 kubernetes
-blcli init kubernetes -r /path/to/bl-template-one -a args.yaml
-
-# 生成时指定输出目录与覆盖
-blcli init -r /path/to/bl-template-one -a args.yaml --output ./workspace/output -w
+blcli init -r github.com/ggsrc/bl-template-personal -a args.yaml
+blcli init terraform -r github.com/ggsrc/bl-template-personal -a args.yaml
+blcli init kubernetes -r github.com/ggsrc/bl-template-personal -a args.yaml
+blcli init -r /path/to/bl-template-personal -a args.yaml --output ./workspace/output -w
 ```
 
-- **Terraform**：输出到 `{workspace}/terraform/`（init、gcp 项目、modules 等）。
-- **Kubernetes**：按 `kubernetes.projects[]` 与 `components` 输出到 `{workspace}/kubernetes/{project}/{component}/`。
-- **GitOps**（可选）：在 `args.yaml` 配置 `gitops.apps[]` 后，输出 deployment/service 等 manifest 到 `{workspace}/gitops/{project}/{app}/`；用 `kubectl apply` 部署，无需 ArgoCD。
+- **Terraform**: `{workspace}/terraform/`
+- **Kubernetes**: `{workspace}/kubernetes/{project}/{component}/`
+- **GitOps** (optional): manifests under `{workspace}/gitops/` when `gitops.apps[]` is set; deploy with `kubectl`
 
-### 3. 部署应用（个人开发者推荐）
+### 3. Deploy applications (personal workflow)
 
 ```bash
-# 平台组件
 blcli apply kubernetes -d ./workspace/output/kubernetes
-
-# 业务应用：直接 kubectl / helm，或 apply 生成的 gitops manifest
 kubectl apply -f ./workspace/output/gitops/app/my-app/
 ```
 
-### 4. 初始化仓库并推送到 GitHub（apply init-repos）
-
-对 `blcli init` 生成的 terraform、kubernetes、gitops 三个目录分别执行 git init、创建 GitHub 仓库、提交并推送（需在提示时输入 Y 确认）：
+### 4. Initialize and push repositories (`apply init-repos`)
 
 ```bash
 blcli apply init-repos -o myorg -d ./workspace/output
 ```
 
-需要已安装并登录 [gh](https://cli.github.com/)（`gh auth login`）。
+Requires [gh](https://cli.github.com/) with `gh auth login`.
+
+中文步骤摘要见 [README_zh.md](./README_zh.md)。
 
 ## Template Syntax
 
