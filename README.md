@@ -2,7 +2,11 @@
 
 # bl-template-personal
 
-**Personal GCP platform template for [blcli](https://github.com/ggsrc/blcli)** — one project, one cluster, minimal config, optional full observability stack.
+**One config. Full cloud platform lifecycle.**
+
+*一份配置，走完云平台全链路。*
+
+Personal **GCP-first** platform template for [blcli](https://github.com/ggsrc/blcli) — one project, one cluster, minimal config, optional full observability stack.
 
 *Default: deploy apps with `kubectl` / `helm` — ArgoCD is not required.*
 

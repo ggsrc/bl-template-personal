@@ -2,7 +2,11 @@
 
 # bl-template-personal
 
-**面向 [blcli](https://github.com/ggsrc/blcli) 的个人 GCP 平台模板** — 单项目、单集群、低配置，可按需开启完整可观测性栈。
+**一份配置，走完云平台全链路。**
+
+*One config. Full cloud platform lifecycle.*
+
+面向 [blcli](https://github.com/ggsrc/blcli) 的个人平台模板 — **当前以 GCP 单项目单集群为首个完整实现**，低配置，可按需开启完整可观测性栈。
 
 *默认用 `kubectl` / `helm` 部署应用，不强制 ArgoCD。*
 
