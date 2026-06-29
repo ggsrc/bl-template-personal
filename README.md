@@ -20,7 +20,7 @@ Personal **GCP-first** platform template for [blcli](https://github.com/ggsrc/bl
 </div>
 
 <!-- ADOPTION:START -->
-**Adoption snapshot:** tracked via GitHub stars and forks · [Star this repo](https://github.com/ggsrc/bl-template-personal) when you use it with blcli
+**Adoption snapshot (2026-06-29):** 0 GitHub stars · 0 forks · powered by [blcli](https://github.com/ggsrc/blcli)
 <!-- ADOPTION:END -->
 
 ---
