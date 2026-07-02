@@ -1,0 +1,26 @@
+# Profile: optional — example optional platform components (not enabled by default).
+# Merge with minimal/full via: blcli init-args -r bl-template-one --profile optional -o args.yaml
+# Or add individual components under kubernetes.projects[].components in your args file.
+
+version: 1.0.0
+
+projects:
+  - name: app
+    components:
+      - name: cnpg
+        parameters:
+          namespace: cnpg
+          release-name: cloudnative-pg
+      - name: redis
+        parameters:
+          namespace: redis
+          release-name: redis
+          existing-secret: redis-auth
+      - name: loki
+        parameters:
+          namespace: loki
+          release-name: loki
+      - name: otel-collector
+        parameters:
+          namespace: otel
+          release-name: otel-collector

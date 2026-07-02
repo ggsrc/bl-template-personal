@@ -43,6 +43,7 @@ bl-template-personal  +  args.yaml  +  blcli  →  一个集群  →  kubectl / 
 |------|---------|------|
 | 个人开发者 | `minimal`（默认） | 生成与 check；最小账单 |
 | 有真实域名 | `full` | DNS + 托管证书 + Istio + 监控 |
+| 需要数据/可观测扩展 | `optional`（+ 编辑 args） | cnpg、redis、loki、otel 等 — 见 [OPTIONAL_COMPONENTS.md](kubernetes/OPTIONAL_COMPONENTS.md) |
 | 企业多环境 | — | 请用 [bl-template](https://github.com/ggsrc/bl-template) |
 
 AI Agent 必改参数与常见误区见 [PERSONAL_DEV.md](./PERSONAL_DEV.md)。
@@ -82,8 +83,9 @@ AI Agent 必改参数与常见误区见 [PERSONAL_DEV.md](./PERSONAL_DEV.md)。
 |---------|------|------|
 | `minimal` | `blcli init-args -r github.com/ggsrc/bl-template-personal --org my-dev` | 默认；无 dns/cert；K8s 仅 sealed-secret |
 | `full` | 加 `--profile full` | 增加 dns/cert、Istio、监控；**需真实域名** |
+| `optional` | 加 `--profile optional` | 示例启用 cnpg、redis、loki、otel；可与 minimal/full 组合 |
 
-详见 [profiles/README.md](./profiles/README.md)。
+详见 [profiles/README.md](./profiles/README.md) 与 [kubernetes/OPTIONAL_COMPONENTS.md](./kubernetes/OPTIONAL_COMPONENTS.md)。
 
 ---
 
@@ -114,5 +116,6 @@ blcli apply kubernetes -d workspace/output/template-one/kubernetes
 |------|------|
 | [README.md](README.md) | 完整英文技术文档 |
 | [PERSONAL_DEV.md](PERSONAL_DEV.md) | 个人开发者与 AI Agent 指南 |
-| [profiles/README.md](profiles/README.md) | minimal / full 差异 |
+| [profiles/README.md](profiles/README.md) | minimal / full / optional 差异 |
+| [kubernetes/OPTIONAL_COMPONENTS.md](kubernetes/OPTIONAL_COMPONENTS.md) | 可选 K8s 组件列表与启用方式 |
 | [blcli 文档](https://github.com/ggsrc/blcli) | CLI 安装与命令 |

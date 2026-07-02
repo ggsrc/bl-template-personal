@@ -43,6 +43,7 @@ Ideal for labs, AI-assisted infra iteration, and low-billing GCP experiments.
 |----------|---------|-------------|
 | Solo developers | `minimal` (default) | Generate & check locally; smallest GCP bill |
 | Developers with a real domain | `full` | DNS + managed certs + Istio + Victoria Metrics + Grafana |
+| Need data / observability add-ons | `optional` (+ edit args) | cnpg, redis, loki, otel-collector, etc. — see [OPTIONAL_COMPONENTS.md](kubernetes/OPTIONAL_COMPONENTS.md) |
 | Enterprise multi-env teams | — | Use [bl-template](https://github.com/ggsrc/bl-template) instead |
 
 See [PERSONAL_DEV.md](./PERSONAL_DEV.md) for AI agent workflows and required parameter changes.
@@ -106,9 +107,10 @@ bl-template/
 │   ├── project/        # Project-level Terraform configurations
 │   └── projects/       # Project deployment configurations
 ├── kubernetes/         # Kubernetes configurations
-│   ├── config.yaml     # Kubernetes component configuration definitions
-│   ├── base/           # Base components (required)
-│   └── optional/        # Optional components
+│   ├── config.yaml     # All registered components (core + optional)
+│   ├── default.yaml    # Default components for init-args (minimal profile)
+│   ├── OPTIONAL_COMPONENTS.md  # Opt-in components reference
+│   └── components/     # Component templates (Helm / Kustomize)
 ├── gitops/             # Optional app manifest templates (disabled by default)
 │   ├── config.yaml     # deployment/statefulset base templates
 │   ├── args.yaml       # Parameter definitions for app manifests
@@ -153,14 +155,19 @@ Defines three main sections:
 
 #### kubernetes/config.yaml
 
-Default Kubernetes platform stack (personal / solo developer):
+**Profile 默认 Kubernetes 栈：**
 
-- `external-secrets-operator` + `external-secrets`: GCP Secret Manager integration
-- `sealed-secret`: encrypted secrets in Git
-- `istio`: service mesh
-- `victoria-metrics-operator` + `victoria-metrics` + `grafana`: monitoring
+| Profile | 组件 |
+|---------|------|
+| minimal | sealed-secret |
+| full | minimal + external-secrets* + istio + victoria-metrics-* + grafana |
+| optional | 示例：cnpg、redis、loki、otel-collector（见 `profiles/optional/`） |
 
-**Not included by default:** ArgoCD (use `kubectl apply` / `helm` for apps).
+\* external-secrets 在 `config.yaml` 中注册，full 场景下通常一并启用。
+
+**可选扩展（opt-in）：** cnpg、redis、paradedb、kafka、juicefs、loki、otel-collector、uptrace、n9e、bytebase — 详见 [kubernetes/OPTIONAL_COMPONENTS.md](kubernetes/OPTIONAL_COMPONENTS.md)。不含 web-ide / navigation（企业版 bl-template 专有）。
+
+**默认不含 ArgoCD** — 应用用 `kubectl` / `helm` 部署。
 
 #### gitops/config.yaml
 

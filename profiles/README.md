@@ -12,6 +12,7 @@ blcli init-args -r /path/to/bl-template-one --profile <name> -o args.yaml
 |---------|---------|-----------|------------|-------------|
 | **minimal** | `--profile minimal` (default) | VPC + GKE + backend; **no dns/cert** | `sealed-secret` only | Personal dev, AI codegen, lowest cost, no real domain |
 | **full** | `--profile full` | minimal + **dns + cert** | minimal + **istio + VM + grafana** | Production-like stack; **requires real domain** for TLS |
+| **optional** | `--profile optional` | (unchanged) | Example **cnpg / redis / loki / otel** entries | Opt-in data/observability; merge with minimal or full |
 
 Overlays live under `profiles/<name>/`:
 
@@ -20,6 +21,8 @@ profiles/
   full/
     terraform.yaml   # adds dns, cert; extends outputs for certificate maps
     kubernetes.yaml  # adds istio, victoria-metrics-*, grafana
+  optional/
+    kubernetes.yaml  # optional cnpg, redis, loki, otel-collector examples
 ```
 
 ## AI agent checklist
@@ -32,6 +35,7 @@ profiles/
 4. **Do not** enable `profiles/full` dns/cert with placeholder domains like `app.example.com` for real `terraform apply`.
 5. Deploy applications with `kubectl` / `helm`, not ArgoCD (removed from template-one).
 6. Use `blcli explain -r <repo> -m terraform -l` to list components; only components listed in generated `args.yaml` are rendered.
+7. Optional Kubernetes add-ons (cnpg, redis, loki, …): see [kubernetes/OPTIONAL_COMPONENTS.md](../kubernetes/OPTIONAL_COMPONENTS.md).
 
 ## dns + cert (full profile only)
 
