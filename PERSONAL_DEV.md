@@ -22,6 +22,10 @@ blcli init-args -r ./bl-template-one --profile minimal --org my-dev -o args.yaml
 
 # 需要 Cloud DNS + 证书 + 监控栈
 blcli init-args -r ./bl-template-one --profile full --org my-dev -o args.yaml
+
+# 需要数据/可观测性可选组件示例（cnpg、redis、loki、otel）
+blcli init-args -r ./bl-template-one --profile optional --org my-dev -o args.yaml
+# 或在生成 args 后手动向 kubernetes.projects[].components[] 添加组件
 ```
 
 ### minimal（默认）
@@ -39,6 +43,15 @@ blcli init-args -r ./bl-template-one --profile full --org my-dev -o args.yaml
 **Kubernetes 增加：** istio, victoria-metrics-operator, victoria-metrics, grafana  
 
 **适合：** 已有真实域名、需要 GCP 托管证书与可观测性
+
+### optional
+
+在 minimal / full 之上提供 **可选组件示例**（见 `profiles/optional/kubernetes.yaml`）：
+
+- cnpg、redis、loki、otel-collector 等
+- 完整列表见 [kubernetes/OPTIONAL_COMPONENTS.md](./kubernetes/OPTIONAL_COMPONENTS.md)
+
+**适合：** 需要 PostgreSQL Operator、共享 Redis、日志栈等；也可不跑 profile，直接在 args 里添加 `config.yaml` 中任意已注册组件
 
 ## 3. AI Agent 必改 / 勿改清单
 
@@ -126,13 +139,20 @@ kubectl apply -f my-app/
 
 ## 6. Kubernetes 组件说明
 
-| 组件 | minimal | full | 说明 |
-|------|---------|------|------|
-| sealed-secret | ✓ | ✓ | Git 内存加密 Secret；个人 dev 默认密钥方案 |
-| external-secrets | — | — | config 中可选，**不在默认 profile** |
-| istio | — | ✓ | full 监控栈依赖 |
-| victoria-metrics-* | — | ✓ | 指标与告警 |
-| grafana | — | ✓ | VM 数据源；Loki 默认关闭 |
+| 组件 | minimal | full | optional (opt-in) | 说明 |
+|------|---------|------|-------------------|------|
+| sealed-secret | ✓ | ✓ | — | Git 内存加密 Secret |
+| external-secrets* | — | 常用 | — | GCP Secret Manager 同步 |
+| istio | — | ✓ | — | full 监控栈依赖 |
+| victoria-metrics-* | — | ✓ | — | 指标与告警 |
+| grafana | — | ✓ | — | VM 数据源 |
+| cnpg / redis / paradedb / kafka | — | — | ✓ | 数据层，官方镜像 |
+| juicefs / loki / otel-collector | — | — | ✓ | 存储与可观测性 |
+| uptrace / n9e / bytebase | — | — | ✓ | APM / 监控 / DB 变更 |
+
+\* 在 `config.yaml` 注册；是否渲染取决于 `args.yaml` 中的 `components` 列表。
+
+可选组件启用方式与依赖关系见 [kubernetes/OPTIONAL_COMPONENTS.md](./kubernetes/OPTIONAL_COMPONENTS.md)。
 
 `kubernetes/init.sh` 为 **no-op**（不再生成 ArgoCD SSH key）。
 
@@ -150,8 +170,9 @@ blcli runs list --status failed --format json
 
 ## 8. config.yaml vs default.yaml
 
-- **`config.yaml`**：模板仓库**能**提供的全部组件（含 cdn、loki、atlantis 等）
-- **`default.yaml` + profile**：**默认生成**进 args 的组件子集
+- **`config.yaml`**：模板仓库**能**提供的全部组件（含 cnpg、redis、loki 等可选组件）
+- **`default.yaml` + profile**：**默认生成**进 args 的组件子集（minimal / full / optional 示例）
+- **可选组件**：见 [kubernetes/OPTIONAL_COMPONENTS.md](./kubernetes/OPTIONAL_COMPONENTS.md)
 - AI 应只修改生成后的 `args.yaml` 中的 `components` 列表来增删组件
 
 ## 9. 成本提示
