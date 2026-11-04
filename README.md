@@ -4,8 +4,6 @@
 
 **One config. Full cloud platform lifecycle.**
 
-*一份配置，走完云平台全链路。*
-
 Personal **GCP-first** platform template for [blcli](https://github.com/ggsrc/blcli) — one project, one cluster, minimal config, optional full observability stack.
 
 *Default: deploy apps with `kubectl` / `helm` — ArgoCD is not required.*
@@ -15,7 +13,7 @@ Personal **GCP-first** platform template for [blcli](https://github.com/ggsrc/bl
 [![blcli](https://img.shields.io/badge/powered%20by-blcli-blue?style=flat-square)](https://github.com/ggsrc/blcli)
 [![Enterprise template](https://img.shields.io/badge/enterprise-bl--template-orange?style=flat-square)](https://github.com/ggsrc/bl-template)
 
-[Quick Start](#blcli-usage) · [中文说明](README_zh.md) · [PERSONAL_DEV.md](PERSONAL_DEV.md) · [Profiles](profiles/README.md)
+[Quick Start](#blcli-usage) · [Chinese](README_zh.md) · [PERSONAL_DEV.md](PERSONAL_DEV.md) · [Profiles](profiles/README.md)
 
 </div>
 
@@ -115,8 +113,8 @@ bl-template/
 │   ├── config.yaml     # deployment/statefulset base templates
 │   ├── args.yaml       # Parameter definitions for app manifests
 │   ├── default.yaml    # Empty by default; add apps[] to enable generation
-│   └── base-*.tmpl     # deployment/service/configmap 等基础模板
-└── README.md           # 本文件
+│   └── base-*.tmpl     # Base templates (deployment/service/configmap, etc.)
+└── README.md           # This file
 ```
 
 ## Core Components
@@ -155,19 +153,19 @@ Defines three main sections:
 
 #### kubernetes/config.yaml
 
-**Profile 默认 Kubernetes 栈：**
+**Default Kubernetes stack per profile:**
 
-| Profile | 组件 |
+| Profile | Components |
 |---------|------|
 | minimal | sealed-secret |
 | full | minimal + external-secrets* + istio + victoria-metrics-* + grafana |
-| optional | 示例：cnpg、redis、loki、otel-collector（见 `profiles/optional/`） |
+| optional | Examples: cnpg, redis, loki, otel-collector (see `profiles/optional/`) |
 
-\* external-secrets 在 `config.yaml` 中注册，full 场景下通常一并启用。
+\* external-secrets is registered in `config.yaml` and is usually enabled together with the full profile.
 
-**可选扩展（opt-in）：** cnpg、redis、paradedb、kafka、juicefs、loki、otel-collector、uptrace、n9e、bytebase — 详见 [kubernetes/OPTIONAL_COMPONENTS.md](kubernetes/OPTIONAL_COMPONENTS.md)。不含 web-ide / navigation（企业版 bl-template 专有）。
+**Optional extensions (opt-in):** cnpg, redis, paradedb, kafka, juicefs, loki, otel-collector, uptrace, n9e, bytebase — see [kubernetes/OPTIONAL_COMPONENTS.md](kubernetes/OPTIONAL_COMPONENTS.md). web-ide and navigation are not included (they are specific to the enterprise bl-template).
 
-**默认不含 ArgoCD** — 应用用 `kubectl` / `helm` 部署。
+**ArgoCD is not included by default** — deploy applications with `kubectl` / `helm`.
 
 #### gitops/config.yaml
 
@@ -304,7 +302,7 @@ blcli apply init-repos -o myorg -d ./workspace/output
 
 Requires [gh](https://cli.github.com/) with `gh auth login`.
 
-中文步骤摘要见 [README_zh.md](./README_zh.md)。
+A Chinese summary of these steps is in [README_zh.md](./README_zh.md).
 
 ## Template Syntax
 

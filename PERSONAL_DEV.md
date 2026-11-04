@@ -1,107 +1,107 @@
-# bl-template-one 个人开发者指南（含 AI Agent）
+# bl-template-one Personal Developer Guide (with AI Agents)
 
-本文档面向 **个人 GCP 账号 + AI 辅助开发**，说明 template-one 的默认路径、profile 选择、必改参数与常见误区。
+This guide is for **a personal GCP account + AI-assisted development**. It covers template-one's default path, choosing a profile, the parameters you must change, and common pitfalls.
 
-## 1. 设计目标
+## 1. Design goals
 
-| 目标 | 做法 |
+| Goal | Approach |
 |------|------|
-| 低配置负担 | 默认 `minimal` profile；无 ArgoCD、无 Dex OAuth |
-| 渐进复杂度 | 需要域名/TLS/监控时再 `--profile full` |
-| AI 可推理 | 自描述 `args.yaml` + `blcli explain` + `profiles/README.md` |
-| 应用部署 | **kubectl / helm**（不用 GitOps CD） |
+| Low configuration burden | `minimal` profile by default; no ArgoCD, no Dex OAuth |
+| Gradual complexity | Switch to `--profile full` when you need a domain, TLS or monitoring |
+| AI-friendly | Self-describing `args.yaml` + `blcli explain` + `profiles/README.md` |
+| Application deployment | **kubectl / helm** (no GitOps CD) |
 
-## 2. Profile 怎么选
+## 2. Choosing a profile
 
 ```bash
-# 默认：个人实验 / 生成验证 / 无真实域名
+# Default: personal experiments / generation checks / no real domain
 blcli init-args -r ./bl-template-one --org my-dev -o args.yaml
 
-# 等价于
+# Equivalent to
 blcli init-args -r ./bl-template-one --profile minimal --org my-dev -o args.yaml
 
-# 需要 Cloud DNS + 证书 + 监控栈
+# Cloud DNS + certificates + monitoring stack
 blcli init-args -r ./bl-template-one --profile full --org my-dev -o args.yaml
 
-# 需要数据/可观测性可选组件示例（cnpg、redis、loki、otel）
+# Examples of optional data/observability components (cnpg, redis, loki, otel)
 blcli init-args -r ./bl-template-one --profile optional --org my-dev -o args.yaml
-# 或在生成 args 后手动向 kubernetes.projects[].components[] 添加组件
+# Or, after generating args, add components to kubernetes.projects[].components[] by hand
 ```
 
-### minimal（默认）
+### minimal (default)
 
-**Terraform 组件：** main, backend, provider, variables, vpc, ip, firewall, gke, outputs  
-**不含：** dns, cert  
-**Kubernetes 组件：** sealed-secret  
-**适合：** Phase 3–4 本地生成与 check、最小 GCP 账单、AI 迭代 infra 代码
+**Terraform components:** main, backend, provider, variables, vpc, ip, firewall, gke, outputs  
+**Not included:** dns, cert  
+**Kubernetes components:** sealed-secret  
+**Good for:** Phase 3–4 local generation and checks, a minimal GCP bill, AI iteration on infra code
 
 ### full
 
-在 minimal 基础上 **叠加**（见 `profiles/full/`）：
+**Adds** on top of minimal (see `profiles/full/`):
 
-**Terraform 增加：** dns, cert，并扩展 outputs 的 certificate_maps  
-**Kubernetes 增加：** istio, victoria-metrics-operator, victoria-metrics, grafana  
+**Terraform adds:** dns, cert, and extends outputs with certificate_maps  
+**Kubernetes adds:** istio, victoria-metrics-operator, victoria-metrics, grafana  
 
-**适合：** 已有真实域名、需要 GCP 托管证书与可观测性
+**Good for:** you already own a real domain and need GCP-managed certificates and observability
 
 ### optional
 
-在 minimal / full 之上提供 **可选组件示例**（见 `profiles/optional/kubernetes.yaml`）：
+Provides **examples of optional components** on top of minimal / full (see `profiles/optional/kubernetes.yaml`):
 
-- cnpg、redis、loki、otel-collector 等
-- 完整列表见 [kubernetes/OPTIONAL_COMPONENTS.md](./kubernetes/OPTIONAL_COMPONENTS.md)
+- cnpg, redis, loki, otel-collector, etc.
+- Full list in [kubernetes/OPTIONAL_COMPONENTS.md](./kubernetes/OPTIONAL_COMPONENTS.md)
 
-**适合：** 需要 PostgreSQL Operator、共享 Redis、日志栈等；也可不跑 profile，直接在 args 里添加 `config.yaml` 中任意已注册组件
+**Good for:** when you need a PostgreSQL operator, shared Redis, a logging stack, etc. You can also skip the profile and add any component registered in `config.yaml` directly to args
 
-## 3. AI Agent 必改 / 勿改清单
+## 3. AI agent checklist: must change / do not change
 
-### init-args 之后必改
+### Must change after init-args
 
 ```yaml
 global:
-  GlobalName: my-dev          # 与 --org 一致即可
+  GlobalName: my-dev          # Same as --org
   workspace: workspace/output/template-one
 ```
 
-`.env`：
+`.env`:
 
 ```env
-BLCLI_TERRAFORM_BILLING_ACCOUNT_ID=<真实 Billing ID>
-BLCLI_TERRAFORM_ORGANIZATION_ID=0   # 个人账号保持 0
+BLCLI_TERRAFORM_BILLING_ACCOUNT_ID=<real Billing ID>
+BLCLI_TERRAFORM_ORGANIZATION_ID=0   # Keep 0 for a personal account
 ```
 
-### 占位符可保留（仅 init/check）
+### Placeholders you can keep (init/check only)
 
-- `domain: app.example.com` — **minimal 下只是 locals 占位**
-- Grafana `root-url` — 用 port-forward 时可不改
+- `domain: app.example.com` — **only a locals placeholder in minimal**
+- Grafana `root-url` — can stay as is if you use port-forward
 
-### 真实 apply 前必须改
+### Must change before a real apply
 
-| 场景 | 必须修改 |
+| Scenario | Must change |
 |------|----------|
 | apply terraform | Billing ID |
-| full + dns/cert | 真实 domain、DNS zone、证书 hostname |
-| full + grafana 对外 URL | `root-url`、`hosted-domain`（若启用 Google OAuth） |
+| full + dns/cert | Real domain, DNS zone, certificate hostnames |
+| full + public Grafana URL | `root-url`, `hosted-domain` (if Google OAuth is enabled) |
 
-### 勿做
+### Do not
 
-- 不要用 `/etc/hosts` 代替 full profile 的 DNS 校验
-- 不要对 placeholder 域名执行 cert 组件 apply
-- 不要假设 `config.yaml` 里列出的所有组件都在默认 args 中（以生成的 `args.yaml` 为准）
+- Do not use `/etc/hosts` instead of the DNS validation in the full profile
+- Do not apply the cert component with placeholder domains
+- Do not assume every component listed in `config.yaml` is in the default args (the generated `args.yaml` is the source of truth)
 
-## 4. 推荐工作流
+## 4. Recommended workflow
 
-### 阶段 A：零云资源（AI 代码生成）
+### Stage A: no cloud resources (AI code generation)
 
 ```bash
 blcli init-args -r ./bl-template-one --org my-dev -o workspace/config/args.yaml
-# 编辑 workspace + Billing 占位
+# Edit workspace + Billing placeholder
 blcli init ./bl-template-one -a workspace/config/args.yaml -o workspace/output/template-one -w
 blcli check kubernetes -d workspace/output/template-one/kubernetes -r ./bl-template-one
 blcli check repo --args workspace/config/args.yaml --project app
 ```
 
-### 阶段 B：最小上云（minimal profile）
+### Stage B: minimal cloud footprint (minimal profile)
 
 ```bash
 blcli apply init -d workspace/output/template-one/terraform/init --args workspace/config/args.yaml
@@ -110,75 +110,75 @@ gcloud container clusters get-credentials app-cluster --region us-west1 --projec
 blcli apply kubernetes -d workspace/output/template-one/kubernetes --kubeconfig $KUBECONFIG
 ```
 
-### 阶段 C：部署业务（无 ArgoCD）
+### Stage C: deploy workloads (no ArgoCD)
 
 ```bash
 kubectl create namespace my-app
 kubectl apply -f my-app/
-# 或 helm upgrade --install ...
+# Or helm upgrade --install ...
 ```
 
-可选：在 `gitops/default.yaml` 增加 `apps[]` 后 `blcli init gitops`，对生成目录 `kubectl apply`（仍无 ArgoCD）。
+Optional: add `apps[]` to `gitops/default.yaml`, run `blcli init gitops`, then `kubectl apply` the generated directory (still no ArgoCD).
 
-## 5. full profile：dns + cert 说明
+## 5. full profile: dns + cert
 
-`profiles/full/terraform.yaml` 增加：
+`profiles/full/terraform.yaml` adds:
 
-1. **dns** — Cloud DNS 托管区（`app.example.com.`）
-2. **cert** — Certificate Manager 证书 + map entries
-3. **outputs** — 输出 certificate map 供 Gateway/Ingress 使用
+1. **dns** — Cloud DNS managed zone (`app.example.com.`)
+2. **cert** — Certificate Manager certificate + map entries
+3. **outputs** — outputs the certificate map for the Gateway/Ingress
 
-**前置条件：**
+**Prerequisites:**
 
-1. 你拥有该域名，并能修改 registrar / NS 记录
-2. 将 `app.example.com` 全部替换为你的域名
-3. `terraform apply` 后按 outputs 提示添加 DNS 验证记录
-4. 证书 PROVISIONING 完成后再挂到负载均衡
+1. You own the domain and can change its registrar / NS records
+2. Replace every `app.example.com` with your domain
+3. After `terraform apply`, add the DNS validation records shown in the outputs
+4. Attach the certificate to the load balancer only after it finishes PROVISIONING
 
-**minimal 不需要任何域名**即可 apply vpc/gke（仍要 Billing）。
+**minimal needs no domain at all** to apply vpc/gke (Billing is still required).
 
-## 6. Kubernetes 组件说明
+## 6. Kubernetes components
 
-| 组件 | minimal | full | optional (opt-in) | 说明 |
+| Component | minimal | full | optional (opt-in) | Notes |
 |------|---------|------|-------------------|------|
-| sealed-secret | ✓ | ✓ | — | Git 内存加密 Secret |
-| external-secrets* | — | 常用 | — | GCP Secret Manager 同步 |
-| istio | — | ✓ | — | full 监控栈依赖 |
-| victoria-metrics-* | — | ✓ | — | 指标与告警 |
-| grafana | — | ✓ | — | VM 数据源 |
-| cnpg / redis / paradedb / kafka | — | — | ✓ | 数据层，官方镜像 |
-| juicefs / loki / otel-collector | — | — | ✓ | 存储与可观测性 |
-| uptrace / n9e / bytebase | — | — | ✓ | APM / 监控 / DB 变更 |
+| sealed-secret | ✓ | ✓ | — | Encrypted Secrets stored in Git |
+| external-secrets* | — | Common | — | Sync from GCP Secret Manager |
+| istio | — | ✓ | — | Required by the full monitoring stack |
+| victoria-metrics-* | — | ✓ | — | Metrics and alerting |
+| grafana | — | ✓ | — | VM data source |
+| cnpg / redis / paradedb / kafka | — | — | ✓ | Data layer, official images |
+| juicefs / loki / otel-collector | — | — | ✓ | Storage and observability |
+| uptrace / n9e / bytebase | — | — | ✓ | APM / monitoring / DB changes |
 
-\* 在 `config.yaml` 注册；是否渲染取决于 `args.yaml` 中的 `components` 列表。
+\* Registered in `config.yaml`; whether it is rendered depends on the `components` list in `args.yaml`.
 
-可选组件启用方式与依赖关系见 [kubernetes/OPTIONAL_COMPONENTS.md](./kubernetes/OPTIONAL_COMPONENTS.md)。
+See [kubernetes/OPTIONAL_COMPONENTS.md](./kubernetes/OPTIONAL_COMPONENTS.md) for how to enable optional components and their dependencies.
 
-`kubernetes/init.sh` 为 **no-op**（不再生成 ArgoCD SSH key）。
+`kubernetes/init.sh` is a **no-op** (it no longer generates an ArgoCD SSH key).
 
-## 7. 与 blcli v2 Agent 配合
+## 7. Working with blcli v2 agents
 
 ```bash
 blcli contract --format json
 blcli explain -r ./bl-template-one -m terraform -l
 blcli explain -r ./bl-template-one -m kubernetes -c gke
-blcli init-args ... --profile minimal   # 或 full
-# 失败时
+blcli init-args ... --profile minimal   # or full
+# On failure
 blcli diagnose --file apply.log --format json
 blcli runs list --status failed --format json
 ```
 
 ## 8. config.yaml vs default.yaml
 
-- **`config.yaml`**：模板仓库**能**提供的全部组件（含 cnpg、redis、loki 等可选组件）
-- **`default.yaml` + profile**：**默认生成**进 args 的组件子集（minimal / full / optional 示例）
-- **可选组件**：见 [kubernetes/OPTIONAL_COMPONENTS.md](./kubernetes/OPTIONAL_COMPONENTS.md)
-- AI 应只修改生成后的 `args.yaml` 中的 `components` 列表来增删组件
+- **`config.yaml`**: every component the template repository **can** provide (including optional ones such as cnpg, redis, loki)
+- **`default.yaml` + profile**: the subset of components **generated** into args by default (minimal / full / optional examples)
+- **Optional components**: see [kubernetes/OPTIONAL_COMPONENTS.md](./kubernetes/OPTIONAL_COMPONENTS.md)
+- AI agents should add or remove components only by editing the `components` list in the generated `args.yaml`
 
-## 9. 成本提示
+## 9. Cost notes
 
-minimal 默认 GKE node pool：`e2-small`，1–2 节点。full profile 叠加监控与 Istio 会增加资源占用；开发环境可先在 minimal 上跑通再切 full。
+The default minimal GKE node pool is `e2-small` with 1–2 nodes. The full profile adds monitoring and Istio, which use more resources; for development, get minimal working first and then switch to full.
 
 ---
 
-更多 profile 细节见 [profiles/README.md](./profiles/README.md)。
+More profile details in [profiles/README.md](./profiles/README.md).
