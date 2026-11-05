@@ -12,6 +12,12 @@
 |------|------|----------|
 | **app** | All-in-one environment under a personal account (single cluster + workloads) | main, backend, config-gcs-tfbackend, provider, variables, vpc, ip, firewall, gke, dns, cert, outputs |
 
+## GKE Baseline: NetworkPolicy, Control Plane and Secure Boot
+
+- `datapathProvider` (default `ADVANCED_DATAPATH`) selects the datapath. Dataplane V2 enforces `NetworkPolicy` natively; `LEGACY_DATAPATH` keeps a pre-existing legacy datapath, where NetworkPolicy needs `networkPolicyEnabled: true` (Calico). Both `datapathProvider` and `enableSecureBoot` (default `true`) are ForceNew in google provider 5.x: the first replaces the cluster, the second replaces the node pools. This template's `default.yaml` sets `deletionProtection: false`, so a replacement plan deletes the cluster — set `datapathProvider: LEGACY_DATAPATH` or `deletionProtection: true` before applying to an existing install.
+- `masterAuthorizedNetworks` (`[{cidrBlock, displayName}]`) restricts the public control-plane endpoint. Empty (default) renders no `master_authorized_networks_config` block, so the control plane is reachable from any IP. When set, the module renders the allowlist and disables Google public CIDR access; node IPs stay allowed. In-place change.
+- `masterIpv4CidrBlock` is declared but not applied: the module has no `private_cluster_config`. It only becomes meaningful together with a private control-plane block, which would also recreate the cluster.
+
 ## Backend
 
 - **Full backend block**: if a project directory should use the GCS backend, include the **backend** component. It renders `backend.tf` with a full `terraform { backend "gcs" { ... } }` block, so `terraform init` and `terraform apply` can run directly.
