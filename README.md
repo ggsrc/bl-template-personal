@@ -163,7 +163,7 @@ Defines three main sections:
 
 \* external-secrets is registered in `config.yaml` and is usually enabled together with the full profile.
 
-**Optional extensions (opt-in):** cnpg, redis, paradedb, kafka, juicefs, loki, otel-collector, uptrace, n9e, bytebase — see [kubernetes/OPTIONAL_COMPONENTS.md](kubernetes/OPTIONAL_COMPONENTS.md). web-ide and navigation are not included (they are specific to the enterprise bl-template).
+**Optional extensions (opt-in):** cnpg, redis, paradedb, kafka, juicefs, loki, otel-collector, uptrace, n9e, bytebase — see [kubernetes/OPTIONAL_COMPONENTS.md](kubernetes/OPTIONAL_COMPONENTS.md). navigation is not included (it is specific to the enterprise bl-template).
 
 **ArgoCD is not included by default** — deploy applications with `kubectl` / `helm`.
 

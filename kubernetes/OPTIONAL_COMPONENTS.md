@@ -1,6 +1,6 @@
 # Optional Kubernetes Components (bl-template-one)
 
-Uses the same optional component implementations (under `kubernetes/components/`) as [bl-template](../bl-template/kubernetes/OPTIONAL_COMPONENTS.md), **without** `web-ide` and `navigation` (these are specific to the enterprise bl-template).
+Uses the same optional component implementations (under `kubernetes/components/`) as [bl-template](../bl-template/kubernetes/OPTIONAL_COMPONENTS.md), **without** `navigation` (it is specific to the enterprise bl-template).
 
 ## Profiles and optional components
 
