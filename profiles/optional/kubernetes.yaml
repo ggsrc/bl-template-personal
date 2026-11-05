@@ -15,7 +15,7 @@ projects:
         parameters:
           namespace: redis
           release-name: redis
-          existing-secret: redis-auth
+          existing-secret: redis-shared
       - name: loki
         parameters:
           namespace: loki

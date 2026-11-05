@@ -9,11 +9,8 @@ projects:
       - name: istio
         parameters:
           namespace: istio
-          istio-operator-version: 1.20.0
-          istio-version: 1.20.0
+          istio-version: 1.31.3
           istio-namespace: istio
-          istio-operator-namespace: istio-operator
-          istio-operator-service-account: istio-operator
       - name: victoria-metrics-operator
         parameters:
           namespace: monitoring-vm
@@ -33,7 +30,7 @@ projects:
         parameters:
           namespace: grafana
           release-name: grafana
-          image-tag: "12.3.1"
+          image-tag: "12.4.13"
           root-url: "https://grafana.example.com"
           vm-datasource-url: "http://vmselect-victoriametrics-vmks.monitoring-vm.svc.cluster.local:8481/select/0/prometheus"
           loki-datasource-url: ""
