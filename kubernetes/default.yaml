@@ -10,4 +10,3 @@ projects:
       - name: sealed-secret
         parameters:
           namespace: sealed-secret
-          controller-manifest-url: https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.32.2/controller.yaml
